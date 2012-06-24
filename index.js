@@ -1,7 +1,43 @@
-//
-// Module require
-//
-var database = require("./database"); 
+// Create a MySQL connection pool with
+// a max of 10 connections and a 30 second max idle time
+var poolModule = require("generic-pool"),
+	path = require("path");
+
+var config = require( path.join(__dirname, "..", "..", "config", "database") );
+
+var pool = poolModule.Pool({
+    name     : 'mysql',
+
+    create   : function(callback) {
+        var mysql = require('mysql');
+
+		var client = mysql.createClient({
+			user: config.user,
+			password: config.password,
+			host: config.host,
+			port: config.port,
+		}).on("error", function(err) {
+				console.log("DB ERROR: " + err);
+				client = null;
+		});
+
+		// switch to target database
+		client.useDatabase( config.database ,function(err) {
+			if(err) {
+				console.log("DB ERROR: Database cannot select db, detail: " + err);
+				return callback(err);
+			}
+
+			return callback(null, client);
+		});
+    },
+
+    destroy  : function(client) { client.end(); },
+
+    max      : 10,
+    idleTimeoutMillis : 30000,
+    log : true
+});
 
 //
 // GenericObject Constructor and important startup function
@@ -21,6 +57,7 @@ var GenericObject = function(table_name) {
 		self._fields = fields;
 	});
 
+	console.log(table_name + " created");
 };
 
 //
@@ -142,10 +179,12 @@ GenericObject.prototype._fieldValueBuilder = function(dataObject) {
 	return field_list.join(",");
 };
 
+
+
 GenericObject.prototype._query = function(sql, callback) {
 	var self = this;
 
-	database.getInstance(function(db) {
+	pool.acquire(function(err, db) {
 		if(db === null) {
 			return callback(new Error("No database connection."));
 		}
@@ -159,6 +198,8 @@ GenericObject.prototype._query = function(sql, callback) {
 			}
 
 			console.log("QUERIED: " + sql);
+
+			pool.release(db);
 			
 			if(typeof fields === "undefined") {
 				process.nextTick(function() { callback( null, data ) ; });
