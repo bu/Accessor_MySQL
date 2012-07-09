@@ -17,8 +17,8 @@ var pool = poolModule.Pool({
 			host: config.host,
 			port: config.port,
 		}).on("error", function(err) {
-				console.log("DB ERROR: " + err);
-				client = null;
+			console.log("DB ERROR: " + err);
+			client = null;
 		});
 
 		// switch to target database
@@ -36,7 +36,7 @@ var pool = poolModule.Pool({
 
     max      : 10,
     idleTimeoutMillis : 30000,
-    log : true
+    log : false
 });
 
 //
