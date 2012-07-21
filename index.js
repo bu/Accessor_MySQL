@@ -1,7 +1,8 @@
 // Create a MySQL connection pool with
 // a max of 10 connections and a 30 second max idle time
 var poolModule = require("generic-pool"),
-	path = require("path");
+	path = require("path"),
+	log = require("util").log;
 
 var config = require( path.join(__dirname, "..", "..", "config", "database") );
 
@@ -197,7 +198,7 @@ GenericObject.prototype._query = function(sql, callback) {
 				return;
 			}
 
-			console.log("QUERIED: " + sql);
+			log("QUERIED: " + sql);
 
 			pool.release(db);
 			
