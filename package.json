@@ -6,7 +6,7 @@
   },
   "name": "Accessor_MySQL",
   "description": "A MySQL database wrapper, provide easy access to database without writing SQL code",
-  "version": "0.2.1",
+  "version": "0.2.5",
   "homepage": "https://github.com/bu/Accessor_MySQL",
   "repository": {
     "type": "git",
