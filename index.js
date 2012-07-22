@@ -2,7 +2,8 @@
 // a max of 10 connections and a 30 second max idle time
 var poolModule = require("generic-pool"),
 	path = require("path"),
-	log = require("util").log;
+	log = require("util").log,
+	sqlstring = require("./SQLString");
 
 var config = require( path.join(__dirname, "..", "..", "config", "database") );
 
@@ -174,13 +175,11 @@ GenericObject.prototype._fieldValueBuilder = function(dataObject) {
 			continue;
 		}
 
-		field_list.push("`" + key + "` = '" + dataObject[key] + "'");
+		field_list.push("`" + key + "` = " + sqlstring.escape(dataObject[key]));
 	}
 
 	return field_list.join(",");
 };
-
-
 
 GenericObject.prototype._query = function(sql, callback) {
 	var self = this;
