@@ -1,4 +1,4 @@
-# Accessor_MySQL 0.2.5
+# Accessor_MySQL 0.3.0
 
 A MySQL database wrapper, provide easy access to database without writing SQL code
 
@@ -213,6 +213,25 @@ Remove records filter by options.where
 			
 			return info.affectedRows;
 		} );
+
+### Observer
+
+You can register to some methods, that will notify when such things occured. (e.g. UPDATE)
+
+
+		// following example will register a function that print out trigger event name
+		
+		var Accessor = require("Accesor");
+		
+		var Log = Accessor("Log", "MySQL");
+		
+		// methods can be register are SELECT, CREATE, UPDATE, REMOVE, INIT
+		var register_methods = ["SELECT", "DELETE", "CREATE", "INIT", "UPDATE"];
+		
+		Log.registerObserver(register_methods, function(event){
+			console.log(event);
+		});
+		
 
 ### LICENSE
 
