@@ -1,5 +1,3 @@
-// Create a MySQL connection pool with
-// a max of 10 connections and a 30 second max idle time
 var poolModule = require("generic-pool"),
 	path = require("path"),
 	log = require("util").log,
@@ -19,14 +17,14 @@ var pool = poolModule.Pool({
 			host: config.host,
 			port: config.port,
 		}).on("error", function(err) {
-			console.log("DB ERROR: " + err);
+			log("DB ERROR: " + err);
 			client = null;
 		});
 
 		// switch to target database
 		client.useDatabase( config.database ,function(err) {
 			if(err) {
-				console.log("DB ERROR: Database cannot select db, detail: " + err);
+				log("DB ERROR: Database cannot select db, detail: " + err);
 				return callback(err);
 			}
 
@@ -49,17 +47,71 @@ var GenericObject = function(table_name) {
 
 	self._table_name = table_name;
 	self._fields = []; 
+	self._observer = {};
+	self._vaildObserveSubject = ["SELECT", "UPDATE", "CREATE", "REMOVE", "INIT"];
 
 	// collect fields
 	self.select( { limit: 1, offset: 0 }, function(err, data, fields) {
 		if(err) {
-			return;
+			return log(err);
 		}
 
 		self._fields = fields;
 	});
 
-	console.log(table_name + " created");
+	log(table_name + " Accessor instance created");
+};
+
+//
+// Observer
+//
+GenericObject.prototype.registerObserver = function(methods, callback) {
+	var self = this;
+
+	if (typeof methods === "undefined" || typeof callback === "undefined") {
+		return false;
+	}
+
+	if(methods.length === 0) {
+		return false;
+	}
+
+	methods.map(function(method) {
+		// skip invaild subject(event)
+		if(self._vaildObserveSubject.indexOf(method) === -1) {
+			return;
+		}
+
+		if(method === "INIT") {
+			return callback();
+		}
+
+		if(typeof self._observer[method] === "undefined") {
+			self._observer[method] = [];
+		}
+		
+		self._observer[method].push(callback);
+	});
+};
+
+GenericObject.prototype.notify = function(event) {
+	var self = this;
+
+	log(event + " called notify");
+
+	if(self._vaildObserveSubject.indexOf(event) === -1) {
+		return;
+	}
+
+	if(typeof self._observer[event] === "undefined" || !(self._observer[event] instanceof Array) ) {
+		return;
+	}
+
+	self._observer[event].map(function(observer) {
+		process.nextTick(function() {
+			observer(event);
+		});
+	});
 };
 
 //
@@ -74,7 +126,14 @@ GenericObject.prototype.create = function(dataObject, callback) {
 	var sql = "INSERT INTO " + self._table_name + " SET " + _sql_fieldValues + ";";
 
 	// sql executing
-	self._query(sql, callback);
+	self._query(sql, function(err, info) {
+
+		self.notify("CREATE");
+		
+		process.nextTick(function() {
+			return callback(err, info);
+		});
+	});
 };
 
 GenericObject.prototype.select = function() {
@@ -104,7 +163,15 @@ GenericObject.prototype.select = function() {
 	// sql execute
 	var sql = "SELECT " + _sql_fields  + " FROM " + self._table_name + _sql_where + _sql_limit + _sql_offset + ";";
 
-	self._query(sql, callback);
+	self._query(sql, function(err, dataset, fields) {
+
+		self.notify("SELECT");
+		
+		process.nextTick(function() {
+			return callback(err, dataset, fields);
+		});
+	});
+
 };
 
 GenericObject.prototype.update = function(options, newDataObject, callback) {
@@ -117,7 +184,15 @@ GenericObject.prototype.update = function(options, newDataObject, callback) {
 	var sql = "UPDATE " + self._table_name + " SET " + _sql_fieldValues + _sql_where + ";";
 
 	// sql executing
-	self._query(sql, callback);
+	self._query(sql, function(err, info) {
+
+		self.notify("UPDATE");
+		
+		process.nextTick(function() {
+			return callback(err, info);
+		});
+	});
+
 };
 
 GenericObject.prototype.remove = function(options, callback) {
@@ -128,7 +203,15 @@ GenericObject.prototype.remove = function(options, callback) {
 	var sql = "DELETE FROM " + self._table_name + _sql_where + ";";
 	
 	// sql executing
-	self._query(sql, callback);
+	self._query(sql, function(err, info) {
+
+		self.notify("REMOVE");
+		
+		process.nextTick(function() {
+			return callback(err, info);
+		});
+	});
+
 };
 
 // 
@@ -170,8 +253,13 @@ GenericObject.prototype._fieldValueBuilder = function(dataObject) {
 		key;
 	
 	for(key in dataObject) {
+		if(typeof self._fields === "undefined") {
+			log( "Warning: Schema fields not found.");
+			continue;
+		}
+
 		if( self._fields.indexOf(key) === -1 ) {
-			console.log( "Warning: " + key + " is not in database schema, and is not inserted into queryset.");
+			log( "Warning: " + key + " is not in database schema, and is not inserted into queryset.");
 			continue;
 		}
 
@@ -192,13 +280,11 @@ GenericObject.prototype._query = function(sql, callback) {
 		db.query(sql, function(err, data, fields) {
 			
 			if(err) {
-				console.log("ERROR: Database select error, detail: " + err);
+				log("ERROR: Database select error, detail: " + err + ", queried: " + sql);
 				process.nextTick(function() { callback(err); });
 				return;
 			}
-
-			log("QUERIED: " + sql);
-
+			
 			pool.release(db);
 			
 			if(typeof fields === "undefined") {
