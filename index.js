@@ -97,8 +97,6 @@ GenericObject.prototype.registerObserver = function(methods, callback) {
 GenericObject.prototype.notify = function(event) {
 	var self = this;
 
-	log(event + " called notify");
-
 	if(self._vaildObserveSubject.indexOf(event) === -1) {
 		return;
 	}
