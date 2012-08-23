@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/bu/Accessor_MySQL.png)](http://travis-ci.org/bu/Accessor_MySQL)
 # Accessor_MySQL 0.3.1
 
 A MySQL database wrapper, provide easy access to database without writing SQL code
