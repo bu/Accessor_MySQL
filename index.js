@@ -11,25 +11,18 @@ var pool = poolModule.Pool({
     create   : function(callback) {
         var mysql = require('mysql');
 
-		var client = mysql.createClient({
+		var client = mysql.createConnection({
 			user: config.user,
 			password: config.password,
 			host: config.host,
 			port: config.port,
+			database: config.database
 		}).on("error", function(err) {
 			log("DB ERROR: " + err);
 			client = null;
 		});
 
-		// switch to target database
-		client.useDatabase( config.database ,function(err) {
-			if(err) {
-				log("DB ERROR: Database cannot select db, detail: " + err);
-				return callback(err);
-			}
-
-			return callback(null, client);
-		});
+		return callback(null, client);
     },
 
     destroy  : function(client) { client.end(); },
@@ -51,12 +44,14 @@ var GenericObject = function(table_name) {
 	self._vaildObserveSubject = ["SELECT", "UPDATE", "CREATE", "REMOVE", "INIT"];
 
 	// collect fields
-	self.select( { limit: 1, offset: 0 }, function(err, data, fields) {
+	self._query("SELECT `column_name` FROM `information_schema`.`columns` WHERE `table_name`='" + table_name + "';", function(err, data) {
 		if(err) {
 			return log(err);
 		}
 
-		self._fields = fields;
+		self._fields = data.map(function(datarow) {
+			return datarow.column_name;
+		});
 	});
 
 	log(table_name + " Accessor instance created");
@@ -275,7 +270,7 @@ GenericObject.prototype._query = function(sql, callback) {
 			return callback(new Error("No database connection."));
 		}
 
-		db.query(sql, function(err, data, fields) {
+		db.query(sql, function(err, data) {
 			
 			if(err) {
 				log("ERROR: Database select error, detail: " + err + ", queried: " + sql);
@@ -284,12 +279,8 @@ GenericObject.prototype._query = function(sql, callback) {
 			}
 			
 			pool.release(db);
-			
-			if(typeof fields === "undefined") {
-				process.nextTick(function() { callback( null, data ) ; });
-			} else {
-				process.nextTick(function() { callback( null, data, self._keys(fields) ) ; });
-			}
+
+			process.nextTick(function() { callback( null, data ) ; });
 		});
 	});
 };
