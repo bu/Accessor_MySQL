@@ -229,7 +229,7 @@ GenericObject.prototype._whereClauseBuilder = function(options) {
 		options.where.map(function(value) {
 			if( Array.isArray(value) ) {
 				if ( value.length === 3 ) { // field, opeator, value
-					_sql_where += " `" + value[0] + "` " + value[1] + " '" + value[2] + "' ";
+					_sql_where += " `" + value[0] + "` " + value[1] + " " + sqlstring.escape(value[2]);
 				}
 			} else {
 				_sql_where += " " + value + " ";
