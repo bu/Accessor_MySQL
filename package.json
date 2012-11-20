@@ -2,7 +2,7 @@
   "author": "Buwei Chiu <bu@hax4.in> (https://github.com/bu/)",
   "name": "Accessor_MySQL",
   "description": "A MySQL database wrapper, provide easy access to database without writing SQL code",
-  "version": "0.3.2",
+  "version": "0.3.3",
 
   "homepage": "https://github.com/bu/Accessor_MySQL",
 
