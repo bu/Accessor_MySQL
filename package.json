@@ -1,33 +1,37 @@
 {
   "author": "Buwei Chiu <bu@hax4.in> (https://github.com/bu/)",
-  "name": "accessor_mysql",
+  "name": "Accessor_MySQL",
   "description": "A MySQL database wrapper, provide easy access to database without writing SQL code",
-  "version": "0.4.0",
+  "version": "0.3.3",
+
   "homepage": "https://github.com/bu/Accessor_MySQL",
+
   "repository": {
     "type": "git",
     "url": "git://github.com/bu/Accessor_MySQL.git"
   },
+
   "dependencies": {
     "Accessor": ">=0.2.0",
     "mysql": ">=0.9.6",
     "generic-pool": ">=1.0.11"
   },
+  
   "devDependencies": {},
   "optionalDependencies": {},
+  
   "engines": {
     "node": "*"
   },
+
   "main": "index.js",
+
   "keywords": [
     "mysql",
     "accessor",
     "genericobject",
     "observer"
   ],
-  "license": "MIT",
-  "readmeFilename": "README.md",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
+
+  "license": "MIT"
 }
