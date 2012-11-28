@@ -3,7 +3,8 @@ var poolModule = require("generic-pool"),
 	log = require("util").log,
 	sqlstring = require("./SQLString");
 
-var config = require( path.join(__dirname, "..", "..", "config", "database") );
+var config = null;
+
 
 var pool = poolModule.Pool({
     name     : 'mysql',
@@ -37,6 +38,10 @@ var pool = poolModule.Pool({
 //
 var GenericObject = function(table_name) {
 	var self = this;
+
+	if(config === null) {
+		config = require( path.join(__dirname, "..", "..", "config", "database") );
+	}
 
 	self._table_name = table_name;
 	self._fields = []; 
@@ -283,6 +288,10 @@ GenericObject.prototype._query = function(sql, callback) {
 			process.nextTick(function() { callback( null, data ) ; });
 		});
 	});
+};
+
+GenericObject.setConfig = function(user_config) {
+	config = user_config;
 };
 
 //
